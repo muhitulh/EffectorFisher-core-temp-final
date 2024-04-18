@@ -21,7 +21,34 @@ parser.add_argument('--p_value', type=float, default=0.05, help='P-value thresho
 # Parse arguments
 args = parser.parse_args()
 
+###Step 3: calculate median and assign disease to low if value lower than median, and high - if value higher than median---------------------------
+#import pandas as pd
+#import glob
 
+# Using glob to find all files starting with '1_data' in the specified directory
+data_files = glob.glob('1_data*.txt')
+
+# Processing each file
+for data_file in data_files:
+    data_df = pd.read_csv(data_file, sep='\t')
+
+    # Check if 'disease' column exists
+
+    
+    if 'disease' in data_df.columns:
+        # Calculate the median
+        median_value = data_df['disease'].median()
+
+        # Replace values based on the median
+        data_df['disease'] = data_df['disease'].apply(lambda x: 'low' if x < median_value else 'high')
+
+        # Save the modified dataframe back to the file
+        data_df.to_csv(data_file, sep='\t', index=False)
+    else:
+        print(f"'disease' column not found in {data_file}")
+        
+print("step 3 completed - set disease severity level.")
+        
 
 ## Step 1 (&2): create cultivar specific files--------------------------original step 2 deleted, as that included here------------------------
 
@@ -75,34 +102,7 @@ for data_file in data_files:
 print("step 2 completed: rows with missing disease data removed.")
 
 
-###Step 3: calculate median and assign disease to low if value lower than median, and high - if value higher than median---------------------------
-#import pandas as pd
-#import glob
 
-# Using glob to find all files starting with '1_data' in the specified directory
-data_files = glob.glob('1_data*.txt')
-
-# Processing each file
-for data_file in data_files:
-    data_df = pd.read_csv(data_file, sep='\t')
-
-    # Check if 'disease' column exists
-
-    
-    if 'disease' in data_df.columns:
-        # Calculate the median
-        median_value = data_df['disease'].median()
-
-        # Replace values based on the median
-        data_df['disease'] = data_df['disease'].apply(lambda x: 'low' if x < median_value else 'high')
-
-        # Save the modified dataframe back to the file
-        data_df.to_csv(data_file, sep='\t', index=False)
-    else:
-        print(f"'disease' column not found in {data_file}")
-        
-print("step 3 completed - set disease severity level.")
-        
 
 ## Step 4: process the complete isoform table - remove isoform frequency <5--------------------------------------------
 ##usage: python step_4_effectorfisher_pipeline.py --min-iso 10 
