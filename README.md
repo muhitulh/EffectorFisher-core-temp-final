@@ -1,6 +1,6 @@
 # EffectorFisher_test
 
-Usage:Run the script with the following command:
+Usage:Run the script with the following command:<br>
 python effectorfisher_pipleline.py --data_type quantitative --min_iso 5 --cyst 2 --pred_score 2 --total_aa 300 --p_value 0.05
 
 Options:
