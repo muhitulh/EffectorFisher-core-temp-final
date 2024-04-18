@@ -18,15 +18,6 @@ Optional:<br>
 --p_value [P-value threshold] (default = 0.05)<br>
 If you don't define these thresholds, the script will use the default values.
 
-##Output:<br>
-#Main output<br>
-9_complete_isoform_list.txt<br>
-10_complete_locus_list.txt<br>
-
-#Additional output<br>
-11_filtered_candidate_list.txt: Based on the default or specified filters. Alternatively, you can apply filters to 10_complete_locus_list.txt as required.<br>
-12_known_effectors_ranking.txt: Contains the ranking of known effectors if you provide a known effector input file.<br>
-
 ##Input files<br>
 0_combined_isoform.txt: This file will be found after running the isoform pipeline in the directory EffectorFisher_test/00_Isoform_table_pipeline_example/02_isoform_combined_table/0_combined_isoform.txt.
 <br>
@@ -36,3 +27,14 @@ If you don't define these thresholds, the script will use the default values.
 <br>
 0_predector_results.txt: This file will be found after running the predector pipeline.
 known_effector.txt: You can provide known effector IDs and names as shown in the example. If not provided, it will be empty.
+<br>
+
+##Output:<br>
+#Main output<br>
+9_complete_isoform_list.txt<br>
+10_complete_locus_list.txt<br>
+
+#Additional output<br>
+11_filtered_candidate_list.txt: Based on the default or specified filters. Alternatively, you can apply filters to 10_complete_locus_list.txt as required.<br>
+12_known_effectors_ranking.txt: Contains the ranking of known effectors if you provide a known effector input file.<br>
+
