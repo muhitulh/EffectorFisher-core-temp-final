@@ -1,5 +1,5 @@
 ## for thresholds set up in command line
-#usage: python 0_effectorfisher_pipleline.py --min_iso 5 --cyst 2 --pred_score 2 --total_aa 300 --p_value 0.05
+#usage: python 0_effectorfisher_pipleline.py --data_type qualitative --min_iso 5 --cyst 2 --pred_score 2 --total_aa 300 --p_value 0.05
 
 
 import pandas as pd
@@ -13,12 +13,11 @@ import csv
 parser = argparse.ArgumentParser(description='Process isoform frequencies.')
 # Add this line in the section where you setup argparse.ArgumentParser
 parser.add_argument('--data_type', type=str, choices=['qualitative', 'quantitative'], required=True, help='Type of phenotypic data to process')
-parser.add_argument('--min_iso', type=int, default=10, help='Minimum isoform count threshold')
+parser.add_argument('--min_iso', type=int, default=5, help='Minimum isoform count threshold')
 parser.add_argument('--cyst', type=float, default=2, help='Cysteine count threshold')
 parser.add_argument('--pred_score', type=float, default=2, help='Prediction score threshold')
 parser.add_argument('--total_aa', type=float, default=300, help='Total amino acid count threshold')
 parser.add_argument('--p_value', type=float, default=0.05, help='P-value threshold')
-
 
 
 # Parse arguments
@@ -50,7 +49,7 @@ if df.columns[0] != 'ID':
 
 for i, col_name in enumerate(df.columns[1:], start=1):
     subset_df = df [['ID', col_name]].copy()
-    subset_df.columns = ['ID', 'disease']
+    subset_df.columns = ['ID', 'disease'] 
     output_file_name = f'1_data{i}.txt'
     subset_df.to_csv(output_file_name, sep='\t', index=False)
 
@@ -59,7 +58,6 @@ print("Step 1 for qualitative data completed: cultivar-specific files with 'dise
 
 
 ## Step 2: remove rows (isolates) with missing disease data-----------------------
-
 #import pandas as pd
 #import glob
 
@@ -85,8 +83,7 @@ print("step 2 completed: rows with missing disease data removed.")
 
 
 
-
-## Step 4: process the complete isoform table - remove isoform frequency <5--------------------------------------------
+## Step 3: process the complete isoform table - remove isoform frequency <5--------------------------------------------
 ##usage: python step_4_effectorfisher_pipeline.py --min-iso 10 
 # --min-iso default value is 5
 #import pandas as pd
@@ -95,7 +92,6 @@ print("step 2 completed: rows with missing disease data removed.")
 # Set up the argument parser
 #parser = argparse.ArgumentParser(description='Process isoform frequencies.')
 #parser.add_argument('--min-iso', type=int, default=5, help='Minimum isoform frequency for inclusion')
-
 # Parse the command-line arguments
 #args = parser.parse_args()
 
@@ -114,9 +110,11 @@ filtered_df = df[['ID'] + list(filtered_isoforms.index)]
 # Saving the filtered DataFrame to a new file
 filtered_df.to_csv('input_files/0_filtered_combined_isoform.txt', index=False, sep='\t')
 
-print("step 4 completed")
+print("step 3 completed")
 
-## Step 5: change 1.0 = P and 0.0 = A----------------------------------------------------------------------------
+
+
+## Step 4: change 1.0 = P and 0.0 = A----------------------------------------------------------------------------
 import pandas as pd
 import glob
 
@@ -134,11 +132,11 @@ for data_file in data_files:
 
     # Save the modified dataframe back to the file
     data_df.to_csv(data_file, sep='\t', index=False)
-print("step 5 completed")
+print("step 4 completed")
 
 
 
-####step 6: merge cultivar-specific file with combine isoform file by ID--------------------------------------------
+####step 5: merge cultivar-specific file with combine isoform file by ID--------------------------------------------
 #import pandas as pd
 #import glob
 #import os
@@ -167,10 +165,10 @@ for data_file in data_files:
     concatenated_file_path =  f'2_merged_data{file_number}.txt'
     concatenated_df.to_csv(concatenated_file_path, sep='\t', index=False)
     
-print("step 6 completed")
+print("step 5 completed")
     
     
-## step 7: contingency table------------------------------------------
+## step 6: contingency table------------------------------------------
 #import pandas as pd
 #import glob
 
@@ -231,10 +229,10 @@ for file_name in file_names:
 
     print(f"Processed and saved hypergeometric analysis table: {hypergeo_data_file}")
 
-print("step 7 completed: contingency table")
+print("step 6 completed: contingency table")
     
     
-## Step 8: hypergeomatric test-------------------------------------------------
+## Step 7: hypergeomatric test-------------------------------------------------
 ###Hypergeo test - loop over many datasets together [automated]
 ###loop over all dataset
 #import math
@@ -287,10 +285,10 @@ for input_file in input_files:
     print(f"Processing {input_file}...")
     process_dataset(input_file, output_file, fact)
 
-print("step 8 completed: hypergeomatric test")
+print("step 7 completed: hypergeomatric test")
 
 
-#step 9 (&10) merge all the cultivar-specific p-value (master data) and add lowest p-value col-----------------------------------------------------
+#step 8 merge all the cultivar-specific p-value (master data) and add lowest p-value col-----------------------------------------------------
 #import pandas as pd
 #import glob
 
@@ -324,11 +322,11 @@ merged_data["p-value_lowest"] = merged_data[p_value_cols].min(axis=1)
 # Save the merged data with the lowest p-value column to a new file
 merged_data.to_csv('6_merged_lowest_p-value.txt', sep='\t', index=False)
 
-print("Step 9 completed. Merged data with lowest p-value written to 'merged_lowest_p-value.txt'")
+print("Step 8 completed. Merged data with lowest p-value written to 'merged_lowest_p-value.txt'")
 
 
 
-##step 10: need to create col locus_id from isoform_id---------------------------------------
+##step 9: need to create col locus_id from isoform_id---------------------------------------
 ###preparing cultivar specific fisher p-value for combining
 #import pandas as pd
 
@@ -351,11 +349,11 @@ merged_df = merged_df[cols]
 # Save the updated dataframe
 merged_df.to_csv("7_merged_lowest_p-value_with_locus_id.txt", index=False, sep="\t")
 
-print("Step 10 completed: locus id added'")
+print("Step 9 completed: locus id added'")
 
 
 
-###step 11: combine fisher result with predector result----------------------------------------(try with raw predector output)
+###step 10: combine fisher result with predector result----------------------------------------(try with raw predector output)
 #import pandas as pd
 
 # Load the data files
@@ -375,10 +373,10 @@ merged_df.fillna('NA', inplace=True)
 # Save the merged data to a new file
 merged_df.to_csv("8_pred_fisher_merged_dataset.txt", index=False, sep="\t")
 
-print("Step 11 completed: predector results added'")
+print("Step 10 completed: predector results added'")
 
 
-## Step 12: add known effectors--------------------------------------------------------------
+## Step 11: add known effectors--------------------------------------------------------------
 #import csv
 #import os
 # Initialize new_data list with headers including the new 'known_effector' column
@@ -410,11 +408,11 @@ with open("9_complete_isoform_list.txt", "w", newline='') as outfile:
     writer = csv.writer(outfile, delimiter='\t')
     writer.writerows(new_data)
 
-print("Step 12 completed. The dataset with known effector added has been saved.")
+print("Step 11 completed. The dataset with known effector added has been saved.")
 
 
 
-## Step 13: final locus list--------------------------------------------------------------------------------------------
+## Step 12: final locus list--------------------------------------------------------------------------------------------
 #import pandas as pd
 
 # Load the data into a pandas DataFrame
@@ -430,9 +428,10 @@ sorted_data_for_ranking = data_no_duplicates.sort_values(by="effector_score", as
 
 sorted_data_for_ranking.to_csv('10_complete_locus_list.txt', sep='\t', index=False) #####change data set here############
 
+print("Step 12 completed.")
 
 
-## step 14 - filtering
+## step 13 - filtering
 # Initialize new_data to store rows that pass the filters
 new_data = []
 
@@ -470,11 +469,11 @@ with open("11_filtered_candidate_list.txt", "w", newline='') as outfile:
     writer = csv.writer(outfile, delimiter="\t")
     writer.writerows(new_data)
 
-print("Dataset filtered based on provided thresholds is saved.")
+print("Step 13 - Dataset filtered based on provided thresholds is saved.")
 
 
 
-## step 15: ranking of known effector after filtering
+## step 14: ranking of known effector after filtering
 import pandas as pd
 
 # Load the data
@@ -511,3 +510,5 @@ else:
     # Optional: Save the processed data to a new CSV file
     output_path = "12_known_effectors_ranking.txt"
     known_effectors_final.to_csv(output_path, sep="\t", index=False)
+
+print("Step 14 completed.")
