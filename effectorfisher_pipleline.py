@@ -12,69 +12,51 @@ import csv
 # Set up the argument parser
 parser = argparse.ArgumentParser(description='Process isoform frequencies.')
 # Add this line in the section where you setup argparse.ArgumentParser
+parser.add_argument('--data_type', type=str, choices=['qualitative', 'quantitative'], required=True, help='Type of phenotypic data to process')
 parser.add_argument('--min_iso', type=int, default=10, help='Minimum isoform count threshold')
 parser.add_argument('--cyst', type=float, default=2, help='Cysteine count threshold')
 parser.add_argument('--pred_score', type=float, default=2, help='Prediction score threshold')
 parser.add_argument('--total_aa', type=float, default=300, help='Total amino acid count threshold')
 parser.add_argument('--p_value', type=float, default=0.05, help='P-value threshold')
 
+
+
 # Parse arguments
 args = parser.parse_args()
 
-###Step 3: calculate median and assign disease to low if value lower than median, and high - if value higher than median---------------------------
+###Step 1: calculate median and assign disease to low if value lower than median, and high - if value higher than median---------------------------
+### quantitative > qualitative 
 #import pandas as pd
 #import glob
 
-# Using glob to find all files starting with '1_data' in the specified directory
-data_files = glob.glob('1_data*.txt')
+if args.data_type == 'quantitative':
+    #Process quantitative data
+    file_path = 'input_files/0_phenotype_data_quantitative.txt'
+    data_df = pd.read_csv(file_path, sep='\t')
 
-# Processing each file
-for data_file in data_files:
-    data_df = pd.read_csv(data_file, sep='\t')
+    for column in data_df.columns[1:]:
+        median_value = data_df[column].median()
+        data_df[column] = data_df[column].apply(lambda x: 'low' if x < median_value else 'high')
 
-    # Check if 'disease' column exists
+    new_filename = file_path.replace('_quantitative.txt', '_qualitative.txt')
+    data_df.to_csv(new_filename, sep='\t', index=False)
 
-    
-    if 'disease' in data_df.columns:
-        # Calculate the median
-        median_value = data_df['disease'].median()
-
-        # Replace values based on the median
-        data_df['disease'] = data_df['disease'].apply(lambda x: 'low' if x < median_value else 'high')
-
-        # Save the modified dataframe back to the file
-        data_df.to_csv(data_file, sep='\t', index=False)
-    else:
-        print(f"'disease' column not found in {data_file}")
-        
-print("step 3 completed - set disease severity level.")
-        
-
-## Step 1 (&2): create cultivar specific files--------------------------original step 2 deleted, as that included here------------------------
-
-#import pandas as pd
-
-# Load the file, ensuring that the first column is treated as the 'ID' column
-df = pd.read_csv('input_files/0_phenotype_data.txt', sep='\t')
-
-# If the dataframe does not have headers, you need to add them
+# Step for qualitative processing runs after quantitative if 'quantitative' or alone if 'qualitative'
+### if quantitative phenotype not available, process qualitative phenotype data
+ 
+df = pd.read_csv('input_files/0_phenotype_data_qualitative.txt', sep='\t')
 if df.columns[0] != 'ID':
-    # Assuming the first column is the one to be renamed to 'ID'
     df.columns = ['ID'] + df.columns[1:].tolist()
 
-# Splitting the file and changing the second column header to 'disease'
-for i, col_name in enumerate(df.columns[1:], start=1):  # start=1 to save files with correct cultivar number
-    # Create a subset dataframe with just the 'ID' column and the current cultivar's data
-    subset_df = df[['ID', col_name]].copy()
-    
-    # Rename the second column to 'disease'
+for i, col_name in enumerate(df.columns[1:], start=1):
+    subset_df = df [['ID', col_name]].copy()
     subset_df.columns = ['ID', 'disease']
-    
-    # Save this dataframe to a file with the original column name in the file name
     output_file_name = f'1_data{i}.txt'
     subset_df.to_csv(output_file_name, sep='\t', index=False)
 
-print("step 1 completed: cultivar-specific files with 'disease' column have been created.")
+print("Step 1 for qualitative data completed: cultivar-specific files with 'disease' column (high+low) have been created.")
+
+
 
 ## Step 2: remove rows (isolates) with missing disease data-----------------------
 
