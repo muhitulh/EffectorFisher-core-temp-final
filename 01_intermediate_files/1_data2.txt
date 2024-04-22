@@ -1,0 +1,15 @@
+ID	disease
+16FG165	high
+16FG167	high
+16FG168	high
+205FG63	low
+Meck1	low
+Mur_S3	high
+SN15	low
+WAC13075	low
+WAC13077	low
+WAC13404	high
+WAC13418	high
+WAC13443	high
+WAC13632	low
+WAC8635	high

@@ -23,6 +23,19 @@ parser.add_argument('--p_value', type=float, default=0.05, help='P-value thresho
 # Parse arguments
 args = parser.parse_args()
 
+
+##create directories for intermediate files
+output_dir = '01_intermediate_files'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+##create directories for intermediate files
+output_dir1 = '02_results'
+if not os.path.exists(output_dir1):
+    os.makedirs(output_dir1)
+
+
+
 ###Step 1: calculate median and assign disease to low if value lower than median, and high - if value higher than median---------------------------
 ### quantitative > qualitative 
 #import pandas as pd
@@ -30,7 +43,7 @@ args = parser.parse_args()
 
 if args.data_type == 'quantitative':
     #Process quantitative data
-    file_path = 'input_files/0_phenotype_data_quantitative.txt'
+    file_path = '00_input_files/0_phenotype_data_quantitative.txt'
     data_df = pd.read_csv(file_path, sep='\t')
 
     for column in data_df.columns[1:]:
@@ -43,14 +56,14 @@ if args.data_type == 'quantitative':
 # Step for qualitative processing runs after quantitative if 'quantitative' or alone if 'qualitative'
 ### if quantitative phenotype not available, process qualitative phenotype data
  
-df = pd.read_csv('input_files/0_phenotype_data_qualitative.txt', sep='\t')
+df = pd.read_csv('00_input_files/0_phenotype_data_qualitative.txt', sep='\t')
 if df.columns[0] != 'ID':
     df.columns = ['ID'] + df.columns[1:].tolist()
 
 for i, col_name in enumerate(df.columns[1:], start=1):
     subset_df = df [['ID', col_name]].copy()
     subset_df.columns = ['ID', 'disease'] 
-    output_file_name = f'1_data{i}.txt'
+    output_file_name = os.path.join(output_dir, f'1_data{i}.txt')
     subset_df.to_csv(output_file_name, sep='\t', index=False)
 
 print("Step 1 for qualitative data completed: cultivar-specific files with 'disease' column (high+low) have been created.")
@@ -62,7 +75,7 @@ print("Step 1 for qualitative data completed: cultivar-specific files with 'dise
 #import glob
 
 # Using glob to find all files starting with '1_data' in the specified directory
-data_files = glob.glob('1_data*.txt')
+data_files = glob.glob('01_intermediate_files/1_data*.txt')
 
 # Process each file
 for data_file in data_files:
@@ -96,7 +109,7 @@ print("step 2 completed: rows with missing disease data removed.")
 #args = parser.parse_args()
 
 # Load the file into a pandas DataFrame
-df = pd.read_csv('input_files/0_combined_isoform.txt', sep='\t')
+df = pd.read_csv('00_input_files/0_combined_isoform.txt', sep='\t')
 
 # Sum the frequencies of each isoform across all samples
 isoform_sums = df.iloc[:, 1:].sum()
@@ -108,7 +121,7 @@ filtered_isoforms = isoform_sums[isoform_sums > args.min_iso]
 filtered_df = df[['ID'] + list(filtered_isoforms.index)]
 
 # Saving the filtered DataFrame to a new file
-filtered_df.to_csv('input_files/0_filtered_combined_isoform.txt', index=False, sep='\t')
+filtered_df.to_csv('01_intermediate_files/0_filtered_combined_isoform.txt', index=False, sep='\t')
 
 print("step 3 completed")
 
@@ -119,7 +132,7 @@ import pandas as pd
 import glob
 
 # Using glob to find all files starting with '1_data' in the specified directory
-data_files = glob.glob('input_files/0_filtered_combined_isoform.txt')
+data_files = glob.glob('01_intermediate_files/0_filtered_combined_isoform.txt')
 
 # Processing each file
 for data_file in data_files:
@@ -142,13 +155,13 @@ print("step 4 completed")
 #import os
 
 # File to be concatenated
-additional_file = 'input_files/0_filtered_combined_isoform.txt'
+additional_file = '01_intermediate_files/0_filtered_combined_isoform.txt'
 
 # Read the additional file
 additional_df = pd.read_csv(additional_file, sep='\t')
 
 # Using glob to find all files starting with '1_data' in the specified directory
-data_files = glob.glob( '1_data*.txt')
+data_files = glob.glob( '01_intermediate_files/1_data*.txt')
 
 # Concatenating each file with the additional file
 for data_file in data_files:
@@ -162,7 +175,7 @@ for data_file in data_files:
     file_number = os.path.basename(data_file).replace('1_data', '').replace('.txt', '')
     
     # Save the concatenated dataframe to a new file
-    concatenated_file_path =  f'2_merged_data{file_number}.txt'
+    concatenated_file_path =  os.path.join(output_dir, f'2_merged_data{file_number}.txt')
     concatenated_df.to_csv(concatenated_file_path, sep='\t', index=False)
     
 print("step 5 completed")
@@ -173,7 +186,7 @@ print("step 5 completed")
 #import glob
 
 # Find all files that start with '4_merged_' and end with '.txt'
-file_names = glob.glob('2_merged_*.txt')
+file_names = glob.glob('01_intermediate_files/2_merged_*.txt')
 
 for file_name in file_names:
     # Load the data
@@ -239,7 +252,7 @@ print("step 6 completed: contingency table")
 #import glob
 
 # Find all files starting with '6_hypergeo_'
-input_files = glob.glob('4_hypergeo_*.txt')
+input_files = glob.glob('01_intermediate_files/4_hypergeo_*.txt')
 
 # Factorial calculation function
 def calculate_factorials(n):
@@ -274,13 +287,13 @@ def process_dataset(input_file, output_file, fact):
 # Pre-calculate factorials
 fact = calculate_factorials(1000000)
 
-# Loop over the input files
+# Process each input file
 for input_file in input_files:
-    # Extract the dataset number or name
-    base_name = input_file.replace('4_hypergeo_', '')  # Remove '6_hypergeo_' prefix
-    
+    base_name = os.path.basename(input_file)  # Gets the filename without the directory path
+    base_name = base_name.replace('4_hypergeo_', '')  # Remove '4_hypergeo_' prefix
+
     # Construct the output file name
-    output_file = f'5_output_hypergeo_{base_name}'
+    output_file = os.path.join(output_dir, f'5_output_hypergeo_{base_name}')
     
     print(f"Processing {input_file}...")
     process_dataset(input_file, output_file, fact)
@@ -293,7 +306,7 @@ print("step 7 completed: hypergeomatric test")
 #import glob
 
 # Specify the pattern for your files
-file_pattern = '5_output_hypergeo_data*.txt'
+file_pattern = '01_intermediate_files/5_output_hypergeo_data*.txt'
 files = glob.glob(file_pattern)
 
 # Initialize an empty DataFrame for the merged data
@@ -320,7 +333,7 @@ p_value_cols = [col for col in merged_data.columns if col.startswith('p-value')]
 merged_data["p-value_lowest"] = merged_data[p_value_cols].min(axis=1)
 
 # Save the merged data with the lowest p-value column to a new file
-merged_data.to_csv('6_merged_lowest_p-value.txt', sep='\t', index=False)
+merged_data.to_csv('01_intermediate_files/6_merged_lowest_p-value.txt', sep='\t', index=False)
 
 print("Step 8 completed. Merged data with lowest p-value written to 'merged_lowest_p-value.txt'")
 
@@ -331,7 +344,7 @@ print("Step 8 completed. Merged data with lowest p-value written to 'merged_lowe
 #import pandas as pd
 
 # Read the merged output
-merged_df = pd.read_csv("6_merged_lowest_p-value.txt", delimiter="\t")
+merged_df = pd.read_csv("01_intermediate_files/6_merged_lowest_p-value.txt", delimiter="\t")
 
 # Duplicate "isoform_id" column for further processing
 merged_df["locus_id"] = merged_df["isoform"]
@@ -347,7 +360,7 @@ cols = ['locus_id'] + [col for col in merged_df if col != 'locus_id']
 merged_df = merged_df[cols]
 
 # Save the updated dataframe
-merged_df.to_csv("7_merged_lowest_p-value_with_locus_id.txt", index=False, sep="\t")
+merged_df.to_csv("01_intermediate_files/7_merged_lowest_p-value_with_locus_id.txt", index=False, sep="\t")
 
 print("Step 9 completed: locus id added'")
 
@@ -357,8 +370,8 @@ print("Step 9 completed: locus id added'")
 #import pandas as pd
 
 # Load the data files
-df1 = pd.read_csv("7_merged_lowest_p-value_with_locus_id.txt", sep="\t")
-df2 = pd.read_csv("input_files/0_predector_results.txt", sep="\t")
+df1 = pd.read_csv("01_intermediate_files/7_merged_lowest_p-value_with_locus_id.txt", sep="\t")
+df2 = pd.read_csv("00_input_files/0_predector_results.txt", sep="\t")
 
 # Ensure that 'locus_id' is the first column in both dataframes
 df1 = df1[['locus_id'] + [col for col in df1.columns if col != 'locus_id']]
@@ -371,7 +384,7 @@ merged_df = df1.merge(df2, on="locus_id", how="left")
 merged_df.fillna('NA', inplace=True)
 
 # Save the merged data to a new file
-merged_df.to_csv("8_pred_fisher_merged_dataset.txt", index=False, sep="\t")
+merged_df.to_csv("01_intermediate_files/8_pred_fisher_merged_dataset.txt", index=False, sep="\t")
 
 print("Step 10 completed: predector results added'")
 
@@ -384,15 +397,15 @@ new_data = []
 
 # Read known_effectors from file into a dictionary
 known_effectors_dict = {}
-if os.path.exists("input_files/known_effector.txt"): 
-    with open("input_files/known_effector.txt", "r") as ke_file:
+if os.path.exists("00_input_files/known_effector.txt"): 
+    with open("00_input_files/known_effector.txt", "r") as ke_file:
         for line in ke_file:
             parts = line.strip().split("\t")
             if len(parts) == 2:
                 known_effectors_dict[parts[0]] = parts[1]
 
 # Process the dataset and add known_effector information
-with open("8_pred_fisher_merged_dataset.txt", "r") as file:
+with open("01_intermediate_files/8_pred_fisher_merged_dataset.txt", "r") as file:
     reader = csv.reader(file, delimiter="\t")
     header = next(reader)
     new_data.append(header + ["known_effector"])  # Add the new column header
@@ -404,7 +417,7 @@ with open("8_pred_fisher_merged_dataset.txt", "r") as file:
         new_data.append(row)
 
 # Write the new data, including the known_effector column, back to a new file
-with open("9_complete_isoform_list.txt", "w", newline='') as outfile:
+with open("02_results/complete_isoform_list.txt", "w", newline='') as outfile:
     writer = csv.writer(outfile, delimiter='\t')
     writer.writerows(new_data)
 
@@ -416,7 +429,7 @@ print("Step 11 completed. The dataset with known effector added has been saved."
 #import pandas as pd
 
 # Load the data into a pandas DataFrame
-data = pd.read_csv("9_complete_isoform_list.txt", sep="\t") #####change data set here############
+data = pd.read_csv("02_results/complete_isoform_list.txt", sep="\t") #####change data set here############
 
 # Sort the data based on PF_score
 sorted_data = data.sort_values(by="p-value_lowest", ascending=True)
@@ -426,7 +439,7 @@ data_no_duplicates = sorted_data.drop_duplicates(subset='locus_id', keep='first'
 # Sort the data based on PF_score
 sorted_data_for_ranking = data_no_duplicates.sort_values(by="effector_score", ascending=False)
 
-sorted_data_for_ranking.to_csv('10_complete_locus_list.txt', sep='\t', index=False) #####change data set here############
+sorted_data_for_ranking.to_csv('02_results/complete_loci_list.txt', sep='\t', index=False) #####change data set here############
 
 print("Step 12 completed.")
 
@@ -436,7 +449,7 @@ print("Step 12 completed.")
 new_data = []
 
 # Process file and filter data based on thresholds
-with open("10_complete_locus_list.txt", "r") as file:
+with open("02_results/complete_loci_list.txt", "r") as file:
     reader = csv.reader(file, delimiter="\t")
     header = next(reader)  # Read the header
     new_data.append(header)  # Add the header to new_data
@@ -465,7 +478,7 @@ with open("10_complete_locus_list.txt", "r") as file:
             continue
         
 # Write the processed data to a new file
-with open("11_filtered_candidate_list.txt", "w", newline='') as outfile:
+with open("02_results/filtered_loci_list.txt", "w", newline='') as outfile:
     writer = csv.writer(outfile, delimiter="\t")
     writer.writerows(new_data)
 
@@ -477,7 +490,7 @@ print("Step 13 - Dataset filtered based on provided thresholds is saved.")
 import pandas as pd
 
 # Load the data
-data_path = "11_filtered_candidate_list.txt"
+data_path = "02_results/filtered_loci_list.txt"
 data = pd.read_csv(data_path, sep="\t")
 
 # Ensure that 'known_effector' column is treated as a string
@@ -508,7 +521,7 @@ else:
     print(known_effectors_final)
 
     # Optional: Save the processed data to a new CSV file
-    output_path = "12_known_effectors_ranking.txt"
+    output_path = "02_results/known_effectors_ranking.txt"
     known_effectors_final.to_csv(output_path, sep="\t", index=False)
 
 print("Step 14 completed.")
