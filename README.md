@@ -135,6 +135,6 @@ Step 14 (Additional Result): Rank the known effectors after filtering.
 
 
 ### post-processing module: adding additional info to the complete or filtered candidate lists
-   - Description: This module extracts isoform information from the preprocessed data.
-   - Input: Output from Preprocessing Module 2a
-   - Output: Extracted isoform data
+   - Description: 
+   - Input: 
+   - Output: 
