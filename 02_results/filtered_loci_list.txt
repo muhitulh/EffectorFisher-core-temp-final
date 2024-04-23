@@ -1,4 +1,4 @@
-locus_id	isoform	p-value-1	p-value-2	p-value_lowest	effector_score	residue_number	aa_c_number	effector_matches	kex2_cutsites	known_effector
+locus_id	isoform	Cadoux	Calingiri	p-value_lowest	effector_score	residue_number	aa_c_number	effector_matches	kex2_cutsites	known_effector
 SNOO_309130	SNOO_309130A_1	0.0353730231895614	0.3296703296703253	0.0353730231895614	2.624	189.0	11.0	UvHrip1,MoHrip2	.	
 SNOO_531030	SNOO_531030_1	0.1284965034965036	0.0489510489510489	0.0489510489510489	2.569	151.0	9.0	PnTox1	LQPR:[LIJVAP]X[KRTPEI]R&LXXR:31-34,PCRR:[LIJVAP]X[KRTPEI]R:79-82,RR:[KR]R:81-82,VGRR:[LIJVAP]X[KRTPEI]R:116-119,RR:[KR]R:118-119,RR:[KR]R:122-123	
 SNOO_438040	SNOO_438040A_1	0.0489510489510486	0.1398601398601395	0.0489510489510486	2.406	163.0	20.0	.	RR:[KR]R:71-72	

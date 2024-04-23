@@ -389,7 +389,7 @@ merged_df.to_csv("01_intermediate_files/8_pred_fisher_merged_dataset.txt", index
 print("Step 10 completed: predector results added'")
 
 
-## Step 11: add known effectors--------------------------------------------------------------
+## Step 11a: add known effectors--------------------------------------------------------------
 #import csv
 #import os
 # Initialize new_data list with headers including the new 'known_effector' column
@@ -417,12 +417,40 @@ with open("01_intermediate_files/8_pred_fisher_merged_dataset.txt", "r") as file
         new_data.append(row)
 
 # Write the new data, including the known_effector column, back to a new file
-with open("02_results/complete_isoform_list.txt", "w", newline='') as outfile:
+with open("01_intermediate_files/8_pred_fisher_merged_dataset_with_known_effector.txt", "w", newline='') as outfile:
     writer = csv.writer(outfile, delimiter='\t')
     writer.writerows(new_data)
 
-print("Step 11 completed. The dataset with known effector added has been saved.")
+print("Step 11a completed. The dataset with known effector added has been saved.")
 
+#step 11b ###############################################################################################
+##adding cultivars name to the final complete isoform list
+#import pandas as pd
+
+# Load the qualitative data where column names are the cultivar names
+qualitative_df = pd.read_csv('00_input_files/0_phenotype_data_qualitative.txt', sep='\t')
+
+# Load the isoform list where p-value columns need to be renamed
+isoform_df = pd.read_csv('01_intermediate_files/8_pred_fisher_merged_dataset_with_known_effector.txt', sep='\t')
+
+# Identify p-value columns using regular expressions
+p_value_columns = [col for col in isoform_df.columns if col.startswith('p-value-')]
+
+# Check if the number of p-value columns matches the number of cultivar columns
+if len(p_value_columns) == len(qualitative_df.columns[1:]):  # Ignore the first column if it's not a cultivar
+    cultivar_names = qualitative_df.columns[1:].tolist()
+
+    # Create a dictionary to map p-value columns to cultivar names
+    column_mapping = dict(zip(p_value_columns, cultivar_names))
+
+    # Rename the columns in isoform list
+    isoform_df.rename(columns=column_mapping, inplace=True)
+
+    # Save the updated isoform list
+    isoform_df.to_csv('02_results/complete_isoform_list.txt', sep='\t', index=False)
+    print("Isoform list has been updated with cultivar names replacing p-value column names.")
+else:
+    print("Mismatch in number of p-value columns and cultivar columns.")
 
 
 ## Step 12: final locus list--------------------------------------------------------------------------------------------
