@@ -423,7 +423,30 @@ with open("01_intermediate_files/8_pred_fisher_merged_dataset_with_known_effecto
 
 print("Step 11a completed. The dataset with known effector added has been saved.")
 
-#step 11b ###############################################################################################
+
+# step 11b rearrange cols, keep the important cols in the beginning 
+
+# Load the dataset
+df = pd.read_csv("01_intermediate_files/8_pred_fisher_merged_dataset_with_known_effector.txt", delimiter="\t")
+
+# Find the index of the "effector_score" column
+effector_score_index = df.columns.get_loc("effector_score")
+# Define the columns to insert after "effector_score"
+columns_to_insert = [ "residue_number", "aa_c_number", "effector_matches", "known_effector"]
+
+# Rearrange the columns
+cols_reordered = list(df.columns)
+for col in reversed(columns_to_insert):
+    cols_reordered.insert(effector_score_index + 1, col)
+
+# Reorder the dataframe
+df_reordered = df[cols_reordered]
+
+# Save the reordered dataframe to a new file
+df_reordered.to_csv("01_intermediate_files/8_pred_fisher_merged_dataset_with_known_effector_and_rearranged_cols.txt", sep="\t", index=False)
+
+
+#step 11c ###############################################################################################
 ##adding cultivars name to the final complete isoform list
 #import pandas as pd
 
@@ -431,7 +454,7 @@ print("Step 11a completed. The dataset with known effector added has been saved.
 qualitative_df = pd.read_csv('00_input_files/0_phenotype_data_qualitative.txt', sep='\t')
 
 # Load the isoform list where p-value columns need to be renamed
-isoform_df = pd.read_csv('01_intermediate_files/8_pred_fisher_merged_dataset_with_known_effector.txt', sep='\t')
+isoform_df = pd.read_csv('01_intermediate_files/8_pred_fisher_merged_dataset_with_known_effector_and_rearranged_cols.txt', sep='\t')
 
 # Identify p-value columns using regular expressions
 p_value_columns = [col for col in isoform_df.columns if col.startswith('p-value-')]
