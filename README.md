@@ -1,40 +1,11 @@
-# EffectorFisher Pipeline
-
-The EffectorFisher pipeline is designed to predict strong effector candidates by integrating disease phenotype data with currently available in-silico techniques. To run this complete pipeline, you are assumed to have the following data:
-
-- Pan-gene set
-- Assemblies
-- Phenotype data for the isolates from a set of cultivars panel
-
-## Pipeline Modules [Note: This repository mainly focuses on the details of the EffectorFisher module] 
-
-The EffectorFisher pipeline consists of the following modules:
-
-Preprocessing Module 1: Predector Module
-   - Description: This module performs the initial preprocessing steps required for effector prediction. Predector runs numerous tools for fungal secretome and effector discovery analysis, and outputs a list of ranked candidates with effector-like characteristics (e.g. secreted, small etc).
-   - Input: Pan-gene set
-   - Output: `predector_results.txt` - preprocessed data for `EffectorFisher Module`
-
-Preprocessing Module 2a: Metaeuk Module
-   - Description: This module utilizes the Metaeuk tool for further preprocessing and analysis.
-   - Input: Assemblies
-   - Output: `*_prot.fas` and `*_codon.fas` output files for module `2b`
-
-Preprocessing Module 2b: Isoform Extraction Module
-   - Description: This module extracts isoform presence-absence profile from locus-specific protein fasta files and merged together.
-   - Input: `*_prot.fas` output file from Preprocessing Module `2a`
-   - Output: `combined_isoform.txt` - extracted isoform data for `EffectorFisher Module`
-
-![EffectorFisher Pipeline Flowchart](image.png)
-
-## EffectorFisher Module (Python Library)
+## EffectorFisher-core Module (Python Library)
 
 The EffectorFisher module is a Python library used for analyzing effector proteins to identify strong effector candidates. It focuses on inferring S-gene interactions or associations between candidate effector genes and host cultivars, which are identified via disease phenotyping panels. The module also takes into account other effector-like characteristics to refine the candidate list.
 
 ### Input Files
 To run this module, you need to provide the following input files:
 
-1. `combined_isoform.txt`: This file is the output of mudule `2b`. It should be located in the directory where the isoform pipeline was executed.
+1. `Effector_variants_PAV_output.txt`: This file is from the output of EffectorFisher. It should be located in the directory where the isoform pipeline was executed.
 
 2. `phenotype_data_quantitative.txt` or `phenotype_data_qualitative.txt`:
    - `phenotype_data_quantitative.txt`: This file should contain numeric disease scores. You need to prepare this file as shown in the example.
@@ -52,7 +23,7 @@ Here's an example of the directory structure for running the EffectorFisher modu
 ```plaintext
 working_directory/
 ├── 00_input_files/
-│   ├── combined_isoform.txt
+│   ├── Effector_variants_PAV_output.txt
 │   ├── phenotype_data_quantitative.txt (or phenotype_data_qualitative.txt)
 │   ├── predector_results.txt
 │   └── known_effector.txt (optional)
@@ -132,9 +103,3 @@ Step 12 (Main Result): This step keeps only the strongest isoform (of each locus
 Step 13 (Additional Result): Filter the candidate list based on specified or default filters.
 
 Step 14 (Additional Result): Rank the known effectors after filtering.
-
-
-### post-processing module: adding additional info to the complete or filtered candidate lists
-   - Description: 
-   - Input: 
-   - Output: 
