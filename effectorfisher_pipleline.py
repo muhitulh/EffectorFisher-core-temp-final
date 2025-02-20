@@ -109,7 +109,7 @@ print("step 2 completed: rows with missing disease data removed.")
 #args = parser.parse_args()
 
 # Load the file into a pandas DataFrame
-df = pd.read_csv('00_input_files/0_combined_isoform.txt', sep='\t')
+df = pd.read_csv('00_input_files/Effector_variants_PAV_output.txt', sep='\t')
 
 # Sum the frequencies of each isoform across all samples
 isoform_sums = df.iloc[:, 1:].sum()
