@@ -45,14 +45,21 @@ class FisherExactTest:
         variant_columns = data.columns[2:]
         counts = {(disease, presence): {var: 0 for var in variant_columns}
                   for disease in ['high', 'low'] for presence in [0, 1]}
+        print(data)
 
         for _, row in data.iterrows():
-            disease_status = row['disease'].strip().split()[0]
+            disease_status = row['disease'].strip().split()[0].lower()
+
             for var in variant_columns:
                 value = row[var]
-                if pd.notna(value):
-                    counts[(disease_status, value)][var] += 1
 
+                if pd.notna(value):
+                    try:
+                        val_int = int(value)
+                        if val_int in [0, 1]:
+                            counts[(disease_status, val_int)][var] += 1
+                    except ValueError:
+                        continue
         contingency_df = pd.DataFrame.from_dict(counts, orient='index').transpose()
         contingency_df.columns = [f"{disease}-{presence}" for (disease, presence) in contingency_df.columns]
         contingency_df = contingency_df[sorted(contingency_df.columns, key=lambda x: (x.split('-')[1], x.split('-')[0]))]
@@ -95,7 +102,7 @@ class FisherExactTest:
                     logger.warning(f"Skipping variant '{variant}': {e}")
                     records.append([variant, 'ERROR', str(e)])
 
-            result_df = pd.DataFrame(records, columns=['variant', 'high-0', 'high-1', 'low-0', 'low-1', 'p-value'])
+            result_df = pd.DataFrame(records, columns=['variant', 'a', 'c', 'b', 'd', 'p-value'])
             self.p_value_results[file_number] = result_df
 
         logger.info("Step 7 completed: Fisher exact p-values computed.")
@@ -119,9 +126,6 @@ class FisherExactTest:
         return merged_data
 
     def add_locus_id_column(self) -> pd.DataFrame:
-        """
-        Process the merged summary dataframe to extract and add a 'locus_id' column.
-        """
         try:
             df = self.merged_summary_df.copy()
             df['locus_id'] = df['variant']
@@ -141,7 +145,7 @@ class FisherExactTest:
         os.makedirs(self.output_dir, exist_ok=True)
 
         for file_number, df in self.p_value_results.items():
-            output_file = os.path.join(self.output_dir, f'5_output_hypergeo_{file_number}.txt')
+            output_file = os.path.join(self.output_dir, f'5_output_hypergeo_data{file_number}.txt')
             df.to_csv(output_file, sep='\t', index=False)
             logger.info(f"Saved: {output_file}")
 
