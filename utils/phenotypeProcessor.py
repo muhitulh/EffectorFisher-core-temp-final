@@ -99,16 +99,31 @@ class PhenotypeProcessor:
             raise
 
     def save_processed_data(self, output_dir: str = 'output') -> Dict[str, pd.DataFrame]:
-        output_data = {}
-        try:
-            if self.qualitative_data is not None:
-                qual_key = os.path.join(self.input_dir, '0_phenotype_data_qualitative.txt')
-                output_data[qual_key] = self.qualitative_data.copy()
+        """
+        Save qualitative and per-trait dataframes to disk, and return them.
 
+        Args:
+            output_dir: Output directory to save the files
+
+        Returns:
+            Dictionary mapping file paths to their corresponding DataFrames
+        """
+        output_data = {}
+        os.makedirs(output_dir, exist_ok=True)
+
+        try:
+            # Save full qualitative dataset
+            if self.qualitative_data is not None:
+                qual_path = os.path.join(output_dir, '0_phenotype_data_qualitative.txt')
+                self.qualitative_data.to_csv(qual_path, sep='\t', index=False)
+                output_data[qual_path] = self.qualitative_data.copy()
+
+            # Save cleaned individual trait dataframes
             for i, (trait_name, trait_df) in enumerate(self.processed_traits.items(), start=1):
-                output_key = os.path.join(output_dir, f'1_data{i}.txt')
                 cleaned_df = self.clean_missing_disease_data(trait_df)
-                output_data[output_key] = cleaned_df
+                output_path = os.path.join(output_dir, f'1_data{i}.txt')
+                cleaned_df.to_csv(output_path, sep='\t', index=False)
+                output_data[output_path] = cleaned_df
 
             return output_data
         except Exception as e:
@@ -116,6 +131,15 @@ class PhenotypeProcessor:
             raise
 
     def process_data(self, data_type: str = 'quantitative') -> Dict[str, pd.DataFrame]:
+        """
+        Run the full processing pipeline: load data, convert (if quantitative), and split.
+
+        Args:
+            data_type: 'quantitative' or 'qualitative'
+
+        Returns:
+            Dictionary of processed trait DataFrames
+        """
         try:
             if data_type == 'quantitative':
                 self.load_quantitative_data()
