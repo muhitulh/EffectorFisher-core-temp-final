@@ -82,7 +82,8 @@ class PhenotypeProcessor:
             for i, col_name in enumerate(self.qualitative_data.columns[1:], start=1):
                 subset_df = self.qualitative_data[['ID', col_name]].copy()
                 subset_df.columns = ['ID', 'disease']
-                result[f'trait_{i}'] = subset_df
+                cleaned_df = self.clean_missing_disease_data(subset_df)
+                result[f'trait_{i}'] = cleaned_df
 
             self.processed_traits = result
             return result
