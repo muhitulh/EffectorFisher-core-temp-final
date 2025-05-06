@@ -11,7 +11,7 @@ import argparse
 import pandas as pd
 from utils.phenotypeProcessor import PhenotypeProcessor
 from utils.variantProcessor import VariantProcessor
-
+from utils.fisherExactTest import FisherExactTest
 
 def parse_arguments():
     """
@@ -83,10 +83,19 @@ def main():
     try:
         variant_processed.load_data()
         variant_processed.filter_by_variant_frequency(min_var=args.min_variant)
-        print(variant_processed.filtered_df)
     except Exception as e:
         print(f"[Variant Error] {str(e)}")
         return 1
+
+    # ─────── FISHER TEST ───────
+    # Generate Fisher contingency and perform test
+    fisher = FisherExactTest(trait_data=phenotype_processor.processed_traits,
+                             variant_df=variant_processed.filtered_df,
+                             output_dir=args.output_dir)
+    hypergeo_dict = fisher.generate()
+    p_value_results = fisher.compute_p_values()
+    fisher.merge_and_compute_lowest_p_value()
+    fisher.add_locus_id_column()
 
     # ─────── SAVE ALL OUTPUTS ───────
     if args.save:
@@ -104,14 +113,24 @@ def main():
         # Save variant
         try:
             variant_output_file = os.path.join(args.output_dir, '0_filtered_combined_variants.txt')
-            variant_processor.save_processed_data(output_file=variant_output_file)
-            print(f"  - {variant_output_file}: {len(variant_processor.filtered_df)} samples (variants)")
+            variant_processed.save_processed_data(output_file=variant_output_file)
+            print(f"  - {variant_output_file}: {len(variant_processed.filtered_df)} samples (variants)")
         except Exception as e:
             print(f"[Save Error - Variant] {str(e)}")
             return 1
 
         print("All data cleaned and saved successfully.")
 
+        # Save hypergeometric tables
+        try:
+            fisher.save_processed_data()
+            for file_number, df in fisher.hypergeo_tables.items():
+                hyper_path = os.path.join(args.output_dir, f'4_hypergeo_data{file_number}.txt')
+                print(f"  - {hyper_path}: {len(df)} variants")
+        except Exception as e:
+            print(f"[Save Error - Hypergeometric] {str(e)}")
+            return 1
+       
     print("\nProcessing complete.")
     return 0
 
