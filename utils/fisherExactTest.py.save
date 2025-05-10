@@ -74,10 +74,7 @@ class FisherExactTest:
         return hypergeo_df
 
     def calculate_factorials(self, n: int):
-
         fact = [0.0] * (n + 1)
-        fact[0] = 1
-
         for i in range(1, n + 1):
             fact[i] = fact[i - 1] + math.log(i)
         return fact
