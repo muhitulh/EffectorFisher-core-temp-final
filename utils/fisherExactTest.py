@@ -71,14 +71,14 @@ class FisherExactTest:
 
         rename_map = {'high-0': 'c', 'high-1': 'a', 'low-0': 'd', 'low-1': 'b'}
         hypergeo_df = contingency_df.rename(columns=rename_map)
-        return hypergeo_df
+        return hypergeo_df[['c', 'd', 'a', 'b']]
 
     def calculate_factorials(self, n: int):
 
         fact = [0.0] * (n + 1)
         fact[0] = 1
 
-        for i in range(1, n + 1):
+        for i in range(2, n + 1):
             fact[i] = fact[i - 1] + math.log(i)
         return fact
 
@@ -104,12 +104,12 @@ class FisherExactTest:
                     )
                     p_value = math.exp(hyp1)
 
-                    records.append([variant, a, c, b, d, p_value])
+                    records.append([variant, c, d, a, b, p_value])
                 except Exception as e:
                     logger.warning(f"Skipping variant '{variant}': {e}")
                     records.append([variant, 'ERROR', str(e)])
 
-            result_df = pd.DataFrame(records, columns=['variant', 'a', 'c', 'b', 'd', 'p-value'])
+            result_df = pd.DataFrame(records, columns=['variant', 'c', 'd', 'a', 'b', 'p-value'])
             self.p_value_results[file_number] = result_df
 
         logger.info("Step 7 completed: Fisher exact p-values computed.")
