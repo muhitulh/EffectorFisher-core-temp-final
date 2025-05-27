@@ -12,6 +12,7 @@ import pandas as pd
 from utils.phenotypeProcessor import PhenotypeProcessor
 from utils.variantProcessor import VariantProcessor
 from utils.fisherExactTest import FisherExactTest
+from utils.processPredector import ProcessPredector
 
 def parse_arguments():
     """
@@ -56,7 +57,6 @@ def parse_arguments():
 
     return parser.parse_args()
 
-
 def main():
     """
     Main function to run the EffectorFisher core process.
@@ -88,7 +88,6 @@ def main():
         return 1
 
     # ─────── FISHER TEST ───────
-    # Generate Fisher contingency and perform test
     fisher = FisherExactTest(trait_data=phenotype_processor.processed_traits,
                              variant_df=variant_processed.filtered_df,
                              output_dir=args.output_dir)
@@ -96,6 +95,12 @@ def main():
     p_value_results = fisher.compute_p_values()
     fisher.merge_and_compute_lowest_p_value()
     fisher.add_locus_id_column()
+
+    # ─────── MERGE PREDECTOR ───────
+    pred = ProcessPredector(input_dir=args.input_dir)
+    pred.load_data_predector()
+    pred.merge_with_fisher(fisher)
+    #pred.merge_with_fisher(fisher_df=fisher.merged_with_locus_df)
 
     # ─────── SAVE ALL OUTPUTS ───────
     if args.save:
@@ -130,7 +135,15 @@ def main():
         except Exception as e:
             print(f"[Save Error - Hypergeometric] {str(e)}")
             return 1
-       
+
+        # Save Predector merged output
+        try:
+            pred.save_processed_data(output_path=os.path.join(args.output_dir, '8_pred_fisher_merged_dataset.txt'))
+            print("Step 10 completed: Predector results merged and saved.")
+        except Exception as e:
+            print(f"[Merge Error - Predector] {str(e)}")
+            return 1
+
     print("\nProcessing complete.")
     return 0
 
