@@ -66,7 +66,7 @@ class VariantProcessor:
             filtered_variants = variant_sums[variant_sums > min_var]
             self.filtered_df = self.raw_df[['ID'] + list(filtered_variants.index)].copy()
 
-            logger.info(f"Step 3 completed: {len(filtered_variants)} variants retained (min_var > {min_var})")
+            logger.info(f"{len(filtered_variants)} variants retained (min_var > {min_var})")
             return self.filtered_df
         except Exception as e:
             logger.error(f"Failed to filter variants by frequency: {e}")
@@ -100,7 +100,7 @@ class VariantProcessor:
         try:
             # Future extension: e.g., clustering, dimensionality reduction, etc.
             result = {"processed_variants": var_data.copy()}
-            logger.info(f"Step 4 (placeholder): processed {len(var_data.columns) - 1} variants for {len(var_data)} samples.")
+            logger.info(f"(placeholder): processed {len(var_data.columns) - 1} variants for {len(var_data)} samples.")
             return result
         except Exception as e:
             logger.error(f"Data processing failed: {e}")

@@ -82,7 +82,7 @@ class PhenotypeProcessor:
             for i, col_name in enumerate(self.qualitative_data.columns[1:], start=1):
                 subset_df = self.qualitative_data[['ID', col_name]].copy()
                 subset_df.columns = ['ID', 'disease']
-                cleaned_df = self.clean_missing_disease_data(subset_df)
+                cleaned_df = self._clean_missing_disease_data(subset_df)
                 result[f'trait_{i}'] = cleaned_df
 
             self.processed_traits = result
@@ -91,7 +91,7 @@ class PhenotypeProcessor:
             logger.error(f"Failed to split traits into separate DataFrames: {e}")
             raise
 
-    def clean_missing_disease_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _clean_missing_disease_data(self, df: pd.DataFrame) -> pd.DataFrame:
         try:
             return df[df.iloc[:, 1].notna()].copy()
         except Exception as e:
@@ -120,7 +120,7 @@ class PhenotypeProcessor:
 
             # Save cleaned individual trait dataframes
             for i, (trait_name, trait_df) in enumerate(self.processed_traits.items(), start=1):
-                cleaned_df = self.clean_missing_disease_data(trait_df)
+                cleaned_df = self._clean_missing_disease_data(trait_df)
                 output_path = os.path.join(output_dir, f'1_data{i}.txt')
                 cleaned_df.to_csv(output_path, sep='\t', index=False)
                 output_data[output_path] = cleaned_df

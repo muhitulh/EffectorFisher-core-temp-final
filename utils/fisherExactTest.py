@@ -74,7 +74,9 @@ class FisherExactTest:
         return hypergeo_df[['c', 'd', 'a', 'b']]
 
     def calculate_factorials(self, n: int):
-
+        '''
+        Modified factorial calculation
+        '''
         fact = [0.0] * (n + 1)
         fact[0] = 1
 
@@ -112,7 +114,7 @@ class FisherExactTest:
             result_df = pd.DataFrame(records, columns=['variant', 'c', 'd', 'a', 'b', 'p-value'])
             self.p_value_results[file_number] = result_df
 
-        logger.info("Step 7 completed: Fisher exact p-values computed.")
+        logger.info("Fisher exact p-values computed.")
         return self.p_value_results
 
     def merge_and_compute_lowest_p_value(self) -> pd.DataFrame:
@@ -130,7 +132,7 @@ class FisherExactTest:
         merged_data["p-value_lowest"] = merged_data[p_value_cols].min(axis=1)
         self.merged_summary_df = merged_data
 
-        logger.info("Step 8 completed: Merged lowest p-values.")
+        logger.info("Merged lowest p-values.")
         return merged_data
 
     def add_locus_id_column(self) -> pd.DataFrame:
@@ -143,7 +145,7 @@ class FisherExactTest:
             df = df[cols]
             self.merged_with_locus_df = df
 
-            logger.info("Step 9 completed: Locus IDs extracted.")
+            logger.info("Locus IDs extracted.")
             return df
         except Exception as e:
             logger.error(f"Failed to process locus IDs: {e}")

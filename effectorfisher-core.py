@@ -13,6 +13,9 @@ from utils.phenotypeProcessor import PhenotypeProcessor
 from utils.variantProcessor import VariantProcessor
 from utils.fisherExactTest import FisherExactTest
 from utils.processPredector import ProcessPredector
+from utils.effectorAnnotator import EffectorAnnotator
+from utils.finalizer import Finalizer
+
 
 def parse_arguments():
     """
@@ -23,39 +26,21 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description='Process phenotype and variant data for EffectorFisher')
 
-    parser.add_argument(
-        '--data-type',
-        choices=['quantitative', 'qualitative'],
-        default='quantitative',
-        help='Type of phenotype data to process'
-    )
+    parser.add_argument('--data-type', choices=['quantitative', 'qualitative'], default='quantitative',
+                        help='Type of phenotype data to process')
+    parser.add_argument('--input-dir', default='00_input_files', help='Directory containing input files')
+    parser.add_argument('--output-dir', default='output', help='Directory for output files')
+    parser.add_argument('--min-variant', type=int, default=5, help='Minimum variant frequency for filtering')
+    parser.add_argument('--save', action='store_true', help='Save processed data to files')
 
-    parser.add_argument(
-        '--input-dir',
-        default='00_input_files',
-        help='Directory containing input files'
-    )
-
-    parser.add_argument(
-        '--output-dir',
-        default='output',
-        help='Directory for output files'
-    )
-
-    parser.add_argument(
-        '--min-variant',
-        type=int,
-        default=5,
-        help='Minimum variant frequency for filtering'
-    )
-
-    parser.add_argument(
-        '--save',
-        action='store_true',
-        help='Save processed data to files'
-    )
+    # Add filtering parameters
+    parser.add_argument('--cyst', type=float, default=4, help='Minimum cysteine count')
+    parser.add_argument('--total-aa', type=int, default=300, help='Maximum amino acid length')
+    parser.add_argument('--pred-score', type=float, default=0.7, help='Minimum effector prediction score')
+    parser.add_argument('--p-value', type=float, default=0.05, help='Maximum p-value threshold')
 
     return parser.parse_args()
+
 
 def main():
     """
@@ -88,11 +73,13 @@ def main():
         return 1
 
     # ─────── FISHER TEST ───────
-    fisher = FisherExactTest(trait_data=phenotype_processor.processed_traits,
-                             variant_df=variant_processed.filtered_df,
-                             output_dir=args.output_dir)
-    hypergeo_dict = fisher.generate()
-    p_value_results = fisher.compute_p_values()
+    fisher = FisherExactTest(
+        trait_data=phenotype_processor.processed_traits,
+        variant_df=variant_processed.filtered_df,
+        output_dir=args.output_dir
+    )
+    fisher.generate()
+    fisher.compute_p_values()
     fisher.merge_and_compute_lowest_p_value()
     fisher.add_locus_id_column()
 
@@ -100,7 +87,33 @@ def main():
     pred = ProcessPredector(input_dir=args.input_dir)
     pred.load_data_predector()
     pred.merge_with_fisher(fisher)
-    #pred.merge_with_fisher(fisher_df=fisher.merged_with_locus_df)
+
+    # ─────── EFFECTOR ANNOTATION ───────
+    effector_annotator = EffectorAnnotator(
+        fisher_predector_df=pred.merged_df,
+        phenotype_df=phenotype_processor.qualitative_data,
+        input_dir=args.input_dir
+    )
+    effector_annotator.add_known_effectors()
+
+    # ─────── FINALIZE RANKED ───────
+    try:
+        finalizer = Finalizer(annotated_df=effector_annotator.annotated_df)
+        known_ranked = finalizer.rank_known_effectors(
+            cyst_threshold=args.cyst,
+            max_residue_length=args.total_aa,
+            min_effector_score=args.pred_score,
+            max_p_value=args.p_value
+        )
+
+        if known_ranked is not None:
+            print("Known effector ranking:")
+            print(known_ranked)
+        else:
+            print("No known effectors passed the filtering criteria.")
+    except Exception as e:
+        print(f"[Finalization Error] {str(e)}")
+        return 1
 
     # ─────── SAVE ALL OUTPUTS ───────
     if args.save:
@@ -124,8 +137,6 @@ def main():
             print(f"[Save Error - Variant] {str(e)}")
             return 1
 
-        print("All data cleaned and saved successfully.")
-
         # Save hypergeometric tables
         try:
             fisher.save_processed_data()
@@ -138,10 +149,26 @@ def main():
 
         # Save Predector merged output
         try:
-            pred.save_processed_data(output_path=os.path.join(args.output_dir, '8_pred_fisher_merged_dataset.txt'))
+            pred.save_processed_data(fisher=fisher, output_path=os.path.join(args.output_dir, '8_pred_fisher_merged_dataset.txt'))
             print("Step 10 completed: Predector results merged and saved.")
         except Exception as e:
             print(f"[Merge Error - Predector] {str(e)}")
+            return 1
+
+        # Save annotated isoform list
+        try:
+            effector_annotator.save(output_path=os.path.join(args.output_dir, "complete_isoform_list.txt"))
+            print("Step 11 saved: Final annotated isoform list written to file.")
+        except Exception as e:
+            print(f"[Save Error - Final Isoform List] {str(e)}")
+            return 1
+
+        # Save final filtered locus list and known effectors
+        try:
+            finalizer.save(output_dir=args.output_dir)
+            print("Final files saved in user specified directory")
+        except Exception as e:
+            print(f"[Save Error - Final Outputs] {str(e)}")
             return 1
 
     print("\nProcessing complete.")
